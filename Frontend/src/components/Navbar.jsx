@@ -24,9 +24,14 @@ const Navbar = () => {
                     <Link to="/ourteam" className="text-[11px] font-medium text-neutral-400 hover:text-white transition-colors uppercase tracking-wide hover-trigger">Our Team</Link>
                     <Link to="/contactus" className="text-[11px] font-medium text-neutral-400 hover:text-white transition-colors uppercase tracking-wide hover-trigger">Contact Us</Link>
                 </div>
-                <Link to="/recruitment" className="text-[11px] font-semibold bg-white text-black px-4 py-1.5 rounded-full hover:bg-neutral-200 transition-colors hover-trigger">
-                    Join Now
-                </Link>
+                <div className="flex items-center gap-3">
+                    <Link to="/admin-login" className="text-[11px] font-medium text-neutral-400 hover:text-white transition-colors uppercase tracking-wide px-3">
+                        Admin
+                    </Link>
+                    <Link to="/recruitment" className="text-[11px] font-semibold bg-white text-black px-4 py-1.5 rounded-full hover:bg-neutral-200 transition-colors hover-trigger">
+                        Join Now
+                    </Link>
+                </div>
             </div>
         </nav>
     );

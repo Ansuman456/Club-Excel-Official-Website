@@ -29,6 +29,16 @@ const SankalpEventSchema = new mongoose.Schema({
         type: String,
         enum: ['upcoming', 'completed'],
         required: true
+    },
+    link: {
+        type: String,
+        required: false,
+        default: ""
+    },
+    whatsappGroup: {
+        type: String,
+        required: false,
+        default: ""
     }
 }, { timestamps: true });
 

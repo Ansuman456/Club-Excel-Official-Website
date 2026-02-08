@@ -46,6 +46,11 @@ const RecruitmentSchema = new mongoose.Schema({
         type: String,
         enum: ['localite', 'hostelite'],
         required: true
+    },
+    whatsappGroup: {
+        type: String,
+        required: false,
+        default: ""
     }
 }, { timestamps: true });
 

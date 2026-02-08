@@ -17,8 +17,8 @@ const Layout = ({ children }) => {
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // Initialize AOS
-        AOS.init({ 
-            duration: 800, 
+        AOS.init({
+            duration: 800,
             once: true,
             disable: prefersReducedMotion || window.innerWidth < 768 // Disable AOS on small/slow devices
         });
@@ -32,7 +32,7 @@ const Layout = ({ children }) => {
             // Custom Cursor Logic
             const cursor = cursorRef.current;
             const triggers = document.querySelectorAll('.hover-trigger, a, button, [role="button"]');
-            
+
             const handleMouseEnter = () => cursor?.classList.add('hovered');
             const handleMouseLeave = () => cursor?.classList.remove('hovered');
 
@@ -109,14 +109,16 @@ const Layout = ({ children }) => {
         };
     }, []);
 
+    const isAdminPage = location.pathname.startsWith('/admin');
+
     return (
         <>
             <div id="cursor" ref={cursorRef}></div>
-            <Navbar />
-            <main className="bg-black min-h-screen">
+            {!isAdminPage && <Navbar />}
+            <main className={`${!isAdminPage ? 'bg-black' : ''} min-h-screen`}>
                 {children}
             </main>
-            <Footer />
+            {!isAdminPage && <Footer />}
         </>
     );
 };
