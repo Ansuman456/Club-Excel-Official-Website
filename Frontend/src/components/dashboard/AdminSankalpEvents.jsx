@@ -268,7 +268,6 @@ const AdminSankalpEvents = () => {
                                             value={formData.date}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
-                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -279,7 +278,6 @@ const AdminSankalpEvents = () => {
                                             value={formData.time}
                                             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
-                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -293,7 +291,6 @@ const AdminSankalpEvents = () => {
                                             value={formData.vanue}
                                             onChange={(e) => setFormData({ ...formData, vanue: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
-                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -350,7 +347,6 @@ const AdminSankalpEvents = () => {
                                             type="file"
                                             onChange={handleImageChange}
                                             className={`absolute inset-0 opacity-0 cursor-pointer ${submitting ? 'cursor-not-allowed' : ''}`}
-                                            required={!currentEvent}
                                             disabled={submitting}
                                         />
                                     </div>

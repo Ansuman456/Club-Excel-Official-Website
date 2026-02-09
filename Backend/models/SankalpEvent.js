@@ -7,15 +7,18 @@ const SankalpEventSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        required: true
+        required: false,
+        default: ""
     },
     time: {
         type: String,
-        required: true
+        required: false,
+        default: ""
     },
     vanue: {
         type: String,
-        required: true
+        required: false,
+        default: ""
     },
     rules: {
         type: String,
@@ -28,7 +31,7 @@ const SankalpEventSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['upcoming', 'completed'],
-        required: true
+        default: 'upcoming'
     },
     link: {
         type: String,
