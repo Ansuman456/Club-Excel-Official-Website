@@ -190,7 +190,7 @@ const Events = () => {
     const EventCard = ({ event, isUpcoming }) => (
         <div
             onClick={() => setSelectedEvent(event)}
-            className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden hover:border-blue-500/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] transition-all duration-500 flex flex-col md:flex-row h-full cursor-pointer"
+            className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2rem] overflow-hidden hover:border-blue-500/30 hover:shadow-[0_40px_80px_-20px_rgba(59,130,241,0.2)] transition-all duration-700 flex flex-col md:flex-row md:h-[350px] cursor-pointer"
         >
             {/* Left Side - Image */}
             <div className="md:w-2/5 relative h-64 md:h-auto overflow-hidden flex-shrink-0">
@@ -210,51 +210,51 @@ const Events = () => {
             </div>
 
             {/* Right Side - Content */}
-            <div className="flex-1 p-8 flex flex-col relative">
+            <div className="flex-1 p-5 flex flex-col relative text-justify">
                 <div className="absolute top-6 right-6">
                     <span className={`px-4 py-1.5 rounded-full ${isUpcoming ? 'bg-blue-600' : 'bg-neutral-800'} text-white text-[10px] uppercase tracking-[0.2em] font-black border border-white/10`}>
                         {isUpcoming ? 'Upcoming' : 'Completed'}
                     </span>
                 </div>
 
-                <h3 className="text-3xl font-black mb-6 group-hover:text-blue-400 transition-colors duration-300 pr-24 line-clamp-2">
+                <h3 className="text-xl font-black mb-2 group-hover:text-blue-400 transition-colors duration-300 pr-24 line-clamp-1">
                     {event.name}
                 </h3>
 
                 {/* Event Details */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <div className="flex items-center gap-3 text-neutral-400">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <Calendar className="w-5 h-5 text-blue-500" />
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                    <div className="flex items-center gap-2 text-neutral-400">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <Calendar className="w-4 h-4 text-blue-500" />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase tracking-widest text-neutral-600 font-black">Date</p>
-                            <p className="text-xs font-bold text-white whitespace-nowrap">{event.date}</p>
+                            <p className="text-[8px] uppercase tracking-widest text-neutral-600 font-black">Date</p>
+                            <p className="text-[10px] font-bold text-white whitespace-nowrap">{event.date}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 text-neutral-400">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <Clock className="w-5 h-5 text-blue-500" />
+                    <div className="flex items-center gap-2 text-neutral-400">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <Clock className="w-4 h-4 text-blue-500" />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase tracking-widest text-neutral-600 font-black">Time</p>
-                            <p className="text-xs font-bold text-white whitespace-nowrap">{event.time}</p>
+                            <p className="text-[8px] uppercase tracking-widest text-neutral-600 font-black">Time</p>
+                            <p className="text-[10px] font-bold text-white whitespace-nowrap">{event.time}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 text-neutral-400 col-span-2 lg:col-span-1">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <MapPin className="w-5 h-5 text-blue-500" />
+                    <div className="flex items-center gap-2 text-neutral-400 col-span-2 lg:col-span-1">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <MapPin className="w-4 h-4 text-blue-500" />
                         </div>
                         <div>
-                            <p className="text-[9px] uppercase tracking-widest text-neutral-600 font-black">Venue</p>
-                            <p className="text-xs font-bold text-white truncate">{event.vanue || 'TBA'}</p>
+                            <p className="text-[8px] uppercase tracking-widest text-neutral-600 font-black">Venue</p>
+                            <p className="text-[10px] font-bold text-white truncate">{event.vanue || 'TBA'}</p>
                         </div>
                     </div>
                 </div>
 
-                <p className="text-neutral-400 text-sm leading-relaxed mb-8 line-clamp-3">
+                <p className="text-neutral-400 text-xs leading-relaxed mb-4 whitespace-pre-wrap">
                     {event.description}
                 </p>
 

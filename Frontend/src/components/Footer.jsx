@@ -1,5 +1,6 @@
 import { Hexagon, Linkedin, Instagram, Twitter, Facebook, Mail, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo.webp';
 
 const Footer = () => {
     return (
@@ -9,8 +10,8 @@ const Footer = () => {
             <div className="relative z-10 max-w-7xl mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
                     <div className="lg:col-span-2 space-y-6">
-                        <a href="#" className="text-2xl font-bold tracking-tighter text-white flex items-center gap-3">
-                            <Hexagon className="w-8 h-8 fill-white" />
+                        <a href="#" className="text-2xl font-bold tracking-tighter text-white flex items-center gap-4">
+                            <img src={logo} alt="Club Excel" className="w-12 h-12 object-contain" />
                             CLUB EXCEL
                         </a>
                         <p className="text-neutral-400 text-sm max-w-md leading-relaxed">

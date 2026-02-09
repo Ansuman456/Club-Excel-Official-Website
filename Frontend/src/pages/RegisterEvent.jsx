@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Hash, Home, Send, ArrowLeft, Trophy, Calendar, CheckCircle2 } from 'lucide-react';
+import Popup from '../components/ui/Popup';
 
 const RegisterEvent = () => {
     const { type, id } = useParams();
@@ -15,6 +16,11 @@ const RegisterEvent = () => {
         phoneno: '',
         rollno: '',
         locality: 'hostelite'
+    });
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'error',
+        message: ''
     });
 
     useEffect(() => {
@@ -31,12 +37,20 @@ const RegisterEvent = () => {
             if (foundEvent) {
                 setEvent(foundEvent);
             } else {
-                alert('Event not found');
-                navigate('/events');
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: 'Event not found'
+                });
+                setTimeout(() => navigate('/events'), 2000);
             }
         } catch (error) {
             console.error('Error fetching event:', error);
-            alert('Error loading event details');
+            setPopup({
+                show: true,
+                type: 'error',
+                message: 'Error loading event details'
+            });
         } finally {
             setLoading(false);
         }
@@ -69,11 +83,19 @@ const RegisterEvent = () => {
             } else {
                 console.error('Registration failed:', responseData);
                 const errorMessage = responseData?.message || `Registration failed with status: ${response.status}`;
-                alert(errorMessage);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: errorMessage
+                });
             }
         } catch (error) {
             console.error('Registration network error:', error);
-            alert(`Network error: ${error.message}. Please insure the backend is running.`);
+            setPopup({
+                show: true,
+                type: 'error',
+                message: `Network error: ${error.message}. Please insure the backend is running.`
+            });
         } finally {
             setSubmitting(false);
         }
@@ -103,9 +125,9 @@ const RegisterEvent = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {(event.whatsappGroup || event.link) && (
+                    {event.whatsappGroup && (
                         <a
-                            href={event.whatsappGroup || event.link}
+                            href={event.whatsappGroup}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-3 bg-green-600 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-green-500 transition-all shadow-[0_0_50px_rgba(34,197,94,0.2)]"
@@ -246,6 +268,12 @@ const RegisterEvent = () => {
                     </form>
                 </div>
             </div>
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

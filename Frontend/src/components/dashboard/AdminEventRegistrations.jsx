@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Edit2, Trash2, X, Search } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminEventRegistrations = () => {
     const [registrations, setRegistrations] = useState([]);
@@ -16,6 +17,13 @@ const AdminEventRegistrations = () => {
         locality: 'hostelite'
     });
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         fetchRegistrations();
@@ -86,10 +94,21 @@ const AdminEventRegistrations = () => {
 
             if (response.ok) {
                 setShowModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: currentReg ? 'Registration updated successfully!' : 'Registration added successfully!',
+                    isConfirm: false
+                });
                 fetchRegistrations();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Something went wrong',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error saving registration:', error);
@@ -99,23 +118,48 @@ const AdminEventRegistrations = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this registration?')) return;
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this registration? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/eventregisters/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-        const token = localStorage.getItem('adminToken');
-        try {
-            const response = await fetch(`http://localhost:5000/api/eventregisters/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Registration deleted successfully!',
+                            isConfirm: false
+                        });
+                        fetchRegistrations();
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete registration',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting registration:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
                 }
-            });
-
-            if (response.ok) {
-                fetchRegistrations();
             }
-        } catch (error) {
-            console.error('Error deleting registration:', error);
-        }
+        });
     };
 
     const filteredRegistrations = registrations.filter(reg =>
@@ -338,6 +382,16 @@ const AdminEventRegistrations = () => {
                     </div>
                 </div>
             )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

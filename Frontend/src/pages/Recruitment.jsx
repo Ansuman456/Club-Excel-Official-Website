@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, MessageCircle, User, Hash, Mail, BookOpen, Code, Phone, MapPin, ChevronRight, CheckCircle2 } from 'lucide-react';
+import Popup from '../components/ui/Popup';
 
 const Recruitment = () => {
     const [formData, setFormData] = useState({
@@ -19,6 +20,11 @@ const Recruitment = () => {
     const [whatsappLink, setWhatsappLink] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'error',
+        message: ''
+    });
 
     useEffect(() => {
         fetchSettings();
@@ -57,11 +63,19 @@ const Recruitment = () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 const error = await response.json();
-                alert(error.message || 'Submission failed. Please check your details.');
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Submission failed. Please check your details.'
+                });
             }
         } catch (error) {
             console.error('Error submitting recruitment form:', error);
-            alert('Error connecting to server.');
+            setPopup({
+                show: true,
+                type: 'error',
+                message: 'Error connecting to server.'
+            });
         } finally {
             setSubmitting(false);
         }
@@ -106,7 +120,6 @@ const Recruitment = () => {
     return (
         <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto min-h-screen">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-                {/* Info Section */}
                 <div className="lg:col-span-5 space-y-8">
                     <div data-aos="fade-right">
                         <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-white mb-6 uppercase leading-[0.9]">
@@ -139,10 +152,8 @@ const Recruitment = () => {
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-                {/* Form Section */}
                 <div className="lg:col-span-7 relative">
                     <div className="absolute -inset-4 bg-gradient-to-tr from-blue-500/20 to-transparent blur-3xl -z-10 opacity-50"></div>
                     <form
@@ -357,6 +368,12 @@ const Recruitment = () => {
                     </form>
                 </div>
             </div>
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

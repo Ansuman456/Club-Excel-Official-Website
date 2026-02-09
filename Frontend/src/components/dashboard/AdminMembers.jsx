@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Upload, Linkedin } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminMembers = () => {
     const [members, setMembers] = useState([]);
@@ -17,6 +18,13 @@ const AdminMembers = () => {
     const [imagePreview, setImagePreview] = useState(null);
 
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     const categories = ['member', 'alumni', 'advisor'];
 
@@ -107,10 +115,21 @@ const AdminMembers = () => {
 
             if (response.ok) {
                 setShowModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: currentMember ? 'Member updated successfully!' : 'Member created successfully!',
+                    isConfirm: false
+                });
                 fetchMembers();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Something went wrong',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error saving member:', error);
@@ -120,23 +139,48 @@ const AdminMembers = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this member?')) return;
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this member? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/members/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-        const token = localStorage.getItem('adminToken');
-        try {
-            const response = await fetch(`http://localhost:5000/api/members/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Member deleted successfully!',
+                            isConfirm: false
+                        });
+                        fetchMembers();
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete member',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting member:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
                 }
-            });
-
-            if (response.ok) {
-                fetchMembers();
             }
-        } catch (error) {
-            console.error('Error deleting member:', error);
-        }
+        });
     };
 
     return (
@@ -312,6 +356,16 @@ const AdminMembers = () => {
                     </div>
                 </div>
             )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

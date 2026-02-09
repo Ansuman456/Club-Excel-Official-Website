@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, User } from 'lucide-react';
+import Popup from '../components/ui/Popup';
 
 const ContactUs = () => {
     const [formData, setFormData] = useState({
@@ -10,6 +11,11 @@ const ContactUs = () => {
         message: ''
     });
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: ''
+    });
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,7 +34,11 @@ const ContactUs = () => {
             });
 
             if (response.ok) {
-                alert('Thank you for contacting us! We will get back to you soon.');
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: 'Thank you for contacting us! We will get back to you soon.'
+                });
                 setFormData({
                     firstname: '',
                     lastname: '',
@@ -37,11 +47,19 @@ const ContactUs = () => {
                     message: ''
                 });
             } else {
-                alert('Failed to send message. Please try again.');
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: 'Failed to send message. Please try again.'
+                });
             }
         } catch (error) {
             console.error('Error submitting contact form:', error);
-            alert('Error connecting to server.');
+            setPopup({
+                show: true,
+                type: 'error',
+                message: 'Error connecting to server.'
+            });
         } finally {
             setSubmitting(false);
         }
@@ -185,6 +203,12 @@ const ContactUs = () => {
                     </form>
                 </div>
             </div>
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

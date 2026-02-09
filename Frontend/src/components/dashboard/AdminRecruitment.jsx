@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, MessageCircle, User, Mail, Phone, Hash, BookOpen, Code, MapPin, Globe, Save, Loader2, Search, X } from 'lucide-react';
+import { Trash2, MessageCircle, User, Mail, Phone, Hash, BookOpen, Code, MapPin, Globe, Save, Loader2, Search, X, Edit2 } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminRecruitment = () => {
     const [recruits, setRecruits] = useState([]);
@@ -7,6 +8,29 @@ const AdminRecruitment = () => {
     const [settings, setSettings] = useState({ whatsappLink: '' });
     const [updatingSettings, setUpdatingSettings] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [currentRecruit, setCurrentRecruit] = useState(null);
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        rollno: '',
+        registrationno: '',
+        nistemail: '',
+        personalemail: '',
+        gender: '',
+        branch: '',
+        hackerRankId: '',
+        techstack: '',
+        phoneno: '',
+        locality: ''
+    });
+    const [updatingRecruit, setUpdatingRecruit] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         fetchData();
@@ -64,9 +88,19 @@ const AdminRecruitment = () => {
             });
 
             if (response.ok) {
-                alert('Recruitment settings updated successfully!');
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: 'Recruitment settings updated successfully!',
+                    isConfirm: false
+                });
             } else {
-                alert('Failed to update settings.');
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: 'Failed to update settings.',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error updating settings:', error);
@@ -75,22 +109,110 @@ const AdminRecruitment = () => {
         }
     };
 
-    const handleDeleteRecruit = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this application?')) return;
+    const handleOpenEditModal = (recruit) => {
+        setCurrentRecruit(recruit);
+        setEditFormData({
+            name: recruit.name || '',
+            rollno: recruit.rollno || '',
+            registrationno: recruit.registrationno || '',
+            nistemail: recruit.nistemail || '',
+            personalemail: recruit.personalemail || '',
+            gender: recruit.gender || 'male',
+            branch: recruit.branch || '',
+            hackerRankId: recruit.hackerRankId || '',
+            techstack: recruit.techstack || '',
+            phoneno: recruit.phoneno || '',
+            locality: recruit.locality || 'localite'
+        });
+        setShowEditModal(true);
+    };
 
+    const handleUpdateRecruit = async (e) => {
+        e.preventDefault();
+        setUpdatingRecruit(true);
         const token = localStorage.getItem('adminToken');
         try {
-            const response = await fetch(`http://localhost:5000/api/recruitment/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetch(`http://localhost:5000/api/recruitment/${currentRecruit._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(editFormData)
             });
 
             if (response.ok) {
-                setRecruits(prev => prev.filter(r => r._id !== id));
+                setShowEditModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: 'Recruit data updated successfully!',
+                    isConfirm: false
+                });
+                fetchData();
+            } else {
+                const data = await response.json();
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: data.message || 'Failed to update recruit.',
+                    isConfirm: false
+                });
             }
         } catch (error) {
-            console.error('Error deleting recruit:', error);
+            console.error('Error updating recruit:', error);
+            setPopup({
+                show: true,
+                type: 'error',
+                message: 'An error occurred while updating.',
+                isConfirm: false
+            });
+        } finally {
+            setUpdatingRecruit(false);
         }
+    };
+
+    const handleDeleteRecruit = async (id) => {
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this application? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/recruitment/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Application deleted successfully!',
+                            isConfirm: false
+                        });
+                        setRecruits(prev => prev.filter(r => r._id !== id));
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete application',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting recruit:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
+                }
+            }
+        });
     };
 
     const filteredRecruits = (Array.isArray(recruits) ? recruits : []).filter(r => {
@@ -231,6 +353,13 @@ const AdminRecruitment = () => {
                                     {/* Actions */}
                                     <div className="flex lg:flex-col gap-3 justify-center border-l border-white/5 pl-10">
                                         <button
+                                            onClick={() => handleOpenEditModal(recruit)}
+                                            className="p-5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white rounded-[1.5rem] transition-all duration-500 group/edit"
+                                            title="Edit Application"
+                                        >
+                                            <Edit2 className="w-6 h-6 group-hover/edit:scale-110 transition-transform" />
+                                        </button>
+                                        <button
                                             onClick={() => handleDeleteRecruit(recruit._id)}
                                             className="p-5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-[1.5rem] transition-all duration-500 group/del"
                                             title="Delete Application"
@@ -251,6 +380,197 @@ const AdminRecruitment = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
+                    <div className="relative bg-[#0a0a0a] border border-white/10 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                            <div>
+                                <h3 className="text-xl font-bold">Edit Application</h3>
+                                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-black mt-1">Ref ID: {currentRecruit?._id}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="p-2 hover:bg-white/5 rounded-full transition-all"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateRecruit} className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
+                            {/* Personal Info */}
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-blue-500 font-black flex items-center gap-2">
+                                    <User className="w-3 h-3" /> Personal Identity
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Full Name</label>
+                                        <input
+                                            type="text"
+                                            value={editFormData.name}
+                                            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Gender</label>
+                                        <select
+                                            value={editFormData.gender}
+                                            onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium appearance-none cursor-pointer"
+                                        >
+                                            <option value="male" className="bg-[#121212]">Male</option>
+                                            <option value="female" className="bg-[#121212]">Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Academic Details */}
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-purple-500 font-black flex items-center gap-2">
+                                    <BookOpen className="w-3 h-3" /> Academic Profile
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Roll No / SID</label>
+                                        <input
+                                            type="text"
+                                            value={editFormData.rollno}
+                                            onChange={(e) => setEditFormData({ ...editFormData, rollno: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Reg No</label>
+                                        <input
+                                            type="text"
+                                            value={editFormData.registrationno}
+                                            onChange={(e) => setEditFormData({ ...editFormData, registrationno: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Branch</label>
+                                        <input
+                                            type="text"
+                                            value={editFormData.branch}
+                                            onChange={(e) => setEditFormData({ ...editFormData, branch: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Contact Details */}
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-green-500 font-black flex items-center gap-2">
+                                    <Phone className="w-3 h-3" /> Connectivity
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2 shadow-sm">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">NIST Email</label>
+                                        <input
+                                            type="email"
+                                            value={editFormData.nistemail}
+                                            onChange={(e) => setEditFormData({ ...editFormData, nistemail: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Personal Email</label>
+                                        <input
+                                            type="email"
+                                            value={editFormData.personalemail}
+                                            onChange={(e) => setEditFormData({ ...editFormData, personalemail: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Phone No</label>
+                                        <input
+                                            type="tel"
+                                            value={editFormData.phoneno}
+                                            onChange={(e) => setEditFormData({ ...editFormData, phoneno: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Locality</label>
+                                        <select
+                                            value={editFormData.locality}
+                                            onChange={(e) => setEditFormData({ ...editFormData, locality: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium appearance-none cursor-pointer"
+                                        >
+                                            <option value="localite" className="bg-[#121212]">Localite</option>
+                                            <option value="hostelite" className="bg-[#121212]">Hostelite</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Technical Details */}
+                            <div className="space-y-6">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] text-yellow-500 font-black flex items-center gap-2">
+                                    <Code className="w-3 h-3" /> Skills & IDs
+                                </h4>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">HackerRank ID</label>
+                                        <input
+                                            type="text"
+                                            value={editFormData.hackerRankId}
+                                            onChange={(e) => setEditFormData({ ...editFormData, hackerRankId: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-black text-neutral-500 ml-1">Tech Stack / Interest</label>
+                                        <textarea
+                                            value={editFormData.techstack}
+                                            onChange={(e) => setEditFormData({ ...editFormData, techstack: e.target.value })}
+                                            className="w-full min-h-[100px] bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-all font-medium resize-none"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-6">
+                                <button
+                                    type="submit"
+                                    disabled={updatingRecruit}
+                                    className="w-full bg-white text-black font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {updatingRecruit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    {updatingRecruit ? 'Updating Member Data...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

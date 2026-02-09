@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Upload, Calendar, Clock, MapPin, Users } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminEvents = () => {
     const [events, setEvents] = useState([]);
@@ -13,7 +14,6 @@ const AdminEvents = () => {
         time: '',
         vanue: '',
         rules: '',
-        link: '',
         whatsappGroup: '',
         status: 'upcoming',
         noOfAttendies: 0
@@ -21,6 +21,13 @@ const AdminEvents = () => {
     const [imageFiles, setImageFiles] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         fetchEvents();
@@ -48,7 +55,6 @@ const AdminEvents = () => {
                 time: event.time,
                 vanue: event.vanue || '',
                 rules: event.rules,
-                link: event.link || '',
                 whatsappGroup: event.whatsappGroup || '',
                 status: event.status,
                 noOfAttendies: event.noOfAttendies || 0
@@ -63,7 +69,6 @@ const AdminEvents = () => {
                 time: '',
                 vanue: '',
                 rules: '',
-                link: '',
                 whatsappGroup: '',
                 status: 'upcoming',
                 noOfAttendies: 0
@@ -119,10 +124,21 @@ const AdminEvents = () => {
 
             if (response.ok) {
                 setShowModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: currentEvent ? 'Event updated successfully!' : 'Event created successfully!',
+                    isConfirm: false
+                });
                 fetchEvents();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Something went wrong',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error saving event:', error);
@@ -132,23 +148,48 @@ const AdminEvents = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this event?')) return;
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this event? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/event/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-        const token = localStorage.getItem('adminToken');
-        try {
-            const response = await fetch(`http://localhost:5000/api/event/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Event deleted successfully!',
+                            isConfirm: false
+                        });
+                        fetchEvents();
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete event',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting event:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
                 }
-            });
-
-            if (response.ok) {
-                fetchEvents();
             }
-        } catch (error) {
-            console.error('Error deleting event:', error);
-        }
+        });
     };
 
     return (
@@ -332,7 +373,6 @@ const AdminEvents = () => {
                                             value={formData.rules}
                                             onChange={(e) => setFormData({ ...formData, rules: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/30 h-24 resize-none disabled:opacity-50"
-                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -362,17 +402,6 @@ const AdminEvents = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">External Registration Link</label>
-                                        <input
-                                            type="url"
-                                            value={formData.link}
-                                            onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/30 disabled:opacity-50"
-                                            placeholder="https://..."
-                                            disabled={submitting}
-                                        />
-                                    </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">WhatsApp Group Link</label>
                                         <input
@@ -404,6 +433,16 @@ const AdminEvents = () => {
                     </div>
                 </div>
             )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

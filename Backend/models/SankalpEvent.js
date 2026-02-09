@@ -7,41 +7,37 @@ const SankalpEventSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        required: false,
-        default: ""
+        required: true
     },
     time: {
         type: String,
-        required: false,
-        default: ""
+        required: true
     },
     vanue: {
         type: String,
-        required: false,
-        default: ""
+        required: true
     },
     rules: {
         type: String,
-        required: true
+        default: ""
     },
-    bannerImg: {
-        type: String,
-        required: false
+    photos: {
+        type: [String],
+        default: []
     },
     status: {
         type: String,
         enum: ['upcoming', 'completed'],
         default: 'upcoming'
     },
-    link: {
-        type: String,
-        required: false,
-        default: ""
-    },
     whatsappGroup: {
         type: String,
         required: false,
         default: ""
+    },
+    noOfAttendies: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

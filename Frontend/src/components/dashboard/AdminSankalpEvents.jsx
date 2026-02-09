@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Upload, Calendar, Clock, MapPin, Trophy } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminSankalpEvents = () => {
     const [events, setEvents] = useState([]);
@@ -13,13 +14,20 @@ const AdminSankalpEvents = () => {
         vanue: '',
         rules: '',
         status: 'upcoming',
-        link: '',
-        whatsappGroup: ''
+        whatsappGroup: '',
+        noOfAttendies: 0
     });
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    const [imageFiles, setImageFiles] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
 
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         fetchEvents();
@@ -47,10 +55,10 @@ const AdminSankalpEvents = () => {
                 vanue: event.vanue,
                 rules: event.rules,
                 status: event.status,
-                link: event.link || '',
-                whatsappGroup: event.whatsappGroup || ''
+                whatsappGroup: event.whatsappGroup || '',
+                noOfAttendies: event.noOfAttendies || 0
             });
-            setImagePreview(event.bannerImg);
+            setImagePreviews(event.photos || []);
         } else {
             setCurrentEvent(null);
             setFormData({
@@ -60,24 +68,29 @@ const AdminSankalpEvents = () => {
                 vanue: '',
                 rules: '',
                 status: 'upcoming',
-                link: '',
-                whatsappGroup: ''
+                whatsappGroup: '',
+                noOfAttendies: 0
             });
-            setImagePreview(null);
+            setImagePreviews([]);
         }
-        setImageFile(null);
+        setImageFiles([]);
         setShowModal(true);
         setSubmitting(false);
     };
 
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => setImagePreview(reader.result);
-            reader.readAsDataURL(file);
-        }
+        const files = Array.from(e.target.files);
+        setImageFiles(files);
+
+        const previews = files.map(file => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+        });
+
+        Promise.all(previews).then(res => setImagePreviews(res));
     };
 
     const handleSubmit = async (e) => {
@@ -87,9 +100,10 @@ const AdminSankalpEvents = () => {
 
         const data = new FormData();
         Object.keys(formData).forEach(key => data.append(key, formData[key]));
-        if (imageFile) {
-            data.append('bannerImg', imageFile);
-        }
+
+        imageFiles.forEach(file => {
+            data.append('photos', file);
+        });
 
         try {
             const url = currentEvent
@@ -108,10 +122,21 @@ const AdminSankalpEvents = () => {
 
             if (response.ok) {
                 setShowModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: currentEvent ? 'Sankalp event updated successfully!' : 'Sankalp event created successfully!',
+                    isConfirm: false
+                });
                 fetchEvents();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Something went wrong',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error saving sankalp event:', error);
@@ -121,23 +146,48 @@ const AdminSankalpEvents = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this Sankalp event?')) return;
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this Sankalp event? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/sankalpevent/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-        const token = localStorage.getItem('adminToken');
-        try {
-            const response = await fetch(`http://localhost:5000/api/sankalpevent/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Sankalp event deleted successfully!',
+                            isConfirm: false
+                        });
+                        fetchEvents();
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete event',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting sankalp event:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
                 }
-            });
-
-            if (response.ok) {
-                fetchEvents();
             }
-        } catch (error) {
-            console.error('Error deleting sankalp event:', error);
-        }
+        });
     };
 
     return (
@@ -166,12 +216,14 @@ const AdminSankalpEvents = () => {
                     {events.map((event) => (
                         <div key={event._id} className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden hover:border-indigo-500/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-all duration-500 flex flex-col">
                             <div className="h-56 relative overflow-hidden bg-white/5 border-b border-white/5">
-                                {event.bannerImg ? (
+                                {event.photos?.[0] ? (
+                                    <img src={event.photos[0]} alt={event.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                ) : event.bannerImg ? (
                                     <img src={event.bannerImg} alt={event.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 ) : (
                                     <div className="w-full h-full bg-indigo-500/5 flex items-center justify-center font-black uppercase tracking-widest text-[8px] flex-col">
                                         <Trophy className="w-8 h-8 mb-2 text-indigo-500 opacity-20" />
-                                        <span>No Banner</span>
+                                        <span>No Photo</span>
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-4 backdrop-blur-[2px] z-20">
@@ -268,6 +320,7 @@ const AdminSankalpEvents = () => {
                                             value={formData.date}
                                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
+                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -278,6 +331,7 @@ const AdminSankalpEvents = () => {
                                             value={formData.time}
                                             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
+                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -291,6 +345,7 @@ const AdminSankalpEvents = () => {
                                             value={formData.vanue}
                                             onChange={(e) => setFormData({ ...formData, vanue: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
+                                            required
                                             disabled={submitting}
                                         />
                                     </div>
@@ -307,16 +362,16 @@ const AdminSankalpEvents = () => {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">Registration Link (External)</label>
+                                        <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">Attendees</label>
                                         <input
-                                            type="url"
-                                            value={formData.link}
-                                            onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                                            type="number"
+                                            value={formData.noOfAttendies}
+                                            onChange={(e) => setFormData({ ...formData, noOfAttendies: e.target.value })}
                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 disabled:opacity-50"
-                                            placeholder="https://..."
                                             disabled={submitting}
                                         />
                                     </div>
+
                                     <div className="space-y-1">
                                         <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">WhatsApp Group Link</label>
                                         <input
@@ -331,24 +386,24 @@ const AdminSankalpEvents = () => {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold ml-1">Banner Image</label>
-                                    <div className="relative group">
-                                        <div className="h-40 rounded-2xl overflow-hidden border-2 border-dashed border-white/10 flex items-center justify-center bg-white/5">
-                                            {imagePreview ? (
-                                                <img src={imagePreview} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="text-neutral-500 flex flex-col items-center">
-                                                    <Upload className="w-6 h-6 mb-2" />
-                                                    <span className="text-[10px] uppercase font-bold">Upload Banner</span>
-                                                </div>
-                                            )}
+                                    <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Event Images</label>
+                                    <div className="grid grid-cols-4 gap-4">
+                                        {imagePreviews.map((src, idx) => (
+                                            <div key={idx} className="aspect-square rounded-xl overflow-hidden border border-white/10 relative group">
+                                                <img src={src} className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                        <div className="aspect-square rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center relative hover:border-white/20 transition-all">
+                                            <Upload className="w-5 h-5 text-neutral-500 mb-2" />
+                                            <span className="text-[10px] text-neutral-500 font-bold">UPLOAD</span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                onChange={handleImageChange}
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                disabled={submitting}
+                                            />
                                         </div>
-                                        <input
-                                            type="file"
-                                            onChange={handleImageChange}
-                                            className={`absolute inset-0 opacity-0 cursor-pointer ${submitting ? 'cursor-not-allowed' : ''}`}
-                                            disabled={submitting}
-                                        />
                                     </div>
                                 </div>
 
@@ -358,7 +413,6 @@ const AdminSankalpEvents = () => {
                                         value={formData.rules}
                                         onChange={(e) => setFormData({ ...formData, rules: e.target.value })}
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500/30 h-24 resize-none disabled:opacity-50"
-                                        required
                                         disabled={submitting}
                                     />
                                 </div>
@@ -382,6 +436,16 @@ const AdminSankalpEvents = () => {
                     </div>
                 </div>
             )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };

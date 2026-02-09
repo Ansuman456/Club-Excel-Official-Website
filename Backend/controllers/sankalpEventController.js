@@ -6,9 +6,16 @@ exports.addSankalpEvent = async (req, res) => {
     try {
         const eventData = { ...req.body };
 
-        if (req.file) {
-            const result = await uploadToCloudinary(req.file.buffer);
-            eventData.bannerImg = result.secure_url;
+        const files = [];
+        if (req.files) {
+            if (req.files.photos) files.push(...req.files.photos);
+            if (req.files.bannerImg) files.push(...req.files.bannerImg);
+        }
+
+        if (files.length > 0) {
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
+            const results = await Promise.all(uploadPromises);
+            eventData.photos = results.map(result => result.secure_url);
         }
 
         const newEvent = new SankalpEvent(eventData);
@@ -34,9 +41,16 @@ exports.updateSankalpEvent = async (req, res) => {
     try {
         const updateData = { ...req.body };
 
-        if (req.file) {
-            const result = await uploadToCloudinary(req.file.buffer);
-            updateData.bannerImg = result.secure_url;
+        const files = [];
+        if (req.files) {
+            if (req.files.photos) files.push(...req.files.photos);
+            if (req.files.bannerImg) files.push(...req.files.bannerImg);
+        }
+
+        if (files.length > 0) {
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
+            const results = await Promise.all(uploadPromises);
+            updateData.photos = results.map(result => result.secure_url);
         }
 
         const updatedEvent = await SankalpEvent.findByIdAndUpdate(req.params.id, updateData, { new: true });

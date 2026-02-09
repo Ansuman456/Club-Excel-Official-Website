@@ -6,8 +6,14 @@ exports.addEvent = async (req, res) => {
     try {
         const eventData = { ...req.body };
 
-        if (req.files && req.files.length > 0) {
-            const uploadPromises = req.files.map(file => uploadToCloudinary(file.buffer));
+        const files = [];
+        if (req.files) {
+            if (req.files.photos) files.push(...req.files.photos);
+            if (req.files.bannerImg) files.push(...req.files.bannerImg);
+        }
+
+        if (files.length > 0) {
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
             const results = await Promise.all(uploadPromises);
             eventData.photos = results.map(result => result.secure_url);
         }
@@ -35,8 +41,14 @@ exports.updateEvent = async (req, res) => {
     try {
         const updateData = { ...req.body };
 
-        if (req.files && req.files.length > 0) {
-            const uploadPromises = req.files.map(file => uploadToCloudinary(file.buffer));
+        const files = [];
+        if (req.files) {
+            if (req.files.photos) files.push(...req.files.photos);
+            if (req.files.bannerImg) files.push(...req.files.bannerImg);
+        }
+
+        if (files.length > 0) {
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
             const results = await Promise.all(uploadPromises);
             updateData.photos = results.map(result => result.secure_url);
         }

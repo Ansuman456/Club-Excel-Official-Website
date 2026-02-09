@@ -1,5 +1,6 @@
 import { Hexagon } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import logo from '../assets/logo.webp';
 
 const Navbar = () => {
     const location = useLocation();
@@ -7,8 +8,8 @@ const Navbar = () => {
     return (
         <nav id="navigation" className="fixed top-6 left-0 right-0 z-50 flex justify-center">
             <div className="backdrop-blur-md bg-white/5 border border-white/10 px-6 py-3 rounded-full flex items-center gap-8 hover-trigger transition-all hover:bg-white/10 shadow-2xl shadow-black/50">
-                <Link to="/" className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-                    <Hexagon className="w-4 h-4 fill-white" />
+                <Link to="/" className="text-sm font-bold tracking-tight text-white flex items-center gap-3">
+                    <img src={logo} alt="Club Excel" className="w-8 h-8 object-contain" />
                     CLUB EXCEL
                 </Link>
                 <div className="hidden lg:flex items-center gap-6">

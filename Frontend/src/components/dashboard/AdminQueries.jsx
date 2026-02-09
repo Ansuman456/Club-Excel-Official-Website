@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, User, Trash2, Edit2, X, MessageSquare } from 'lucide-react';
+import Popup from '../ui/Popup';
 
 const AdminQueries = () => {
     const [queries, setQueries] = useState([]);
@@ -14,6 +15,13 @@ const AdminQueries = () => {
         message: ''
     });
     const [submitting, setSubmitting] = useState(false);
+    const [popup, setPopup] = useState({
+        show: false,
+        type: 'success',
+        message: '',
+        isConfirm: false,
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         fetchQueries();
@@ -65,10 +73,21 @@ const AdminQueries = () => {
 
             if (response.ok) {
                 setShowModal(false);
+                setPopup({
+                    show: true,
+                    type: 'success',
+                    message: 'Query updated successfully!',
+                    isConfirm: false
+                });
                 fetchQueries();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: error.message || 'Something went wrong',
+                    isConfirm: false
+                });
             }
         } catch (error) {
             console.error('Error updating query:', error);
@@ -78,23 +97,48 @@ const AdminQueries = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this query?')) return;
+        setPopup({
+            show: true,
+            type: 'confirm',
+            message: 'Are you sure you want to delete this query? This action cannot be undone.',
+            isConfirm: true,
+            onConfirm: async () => {
+                const token = localStorage.getItem('adminToken');
+                try {
+                    const response = await fetch(`http://localhost:5000/api/contacts/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-        const token = localStorage.getItem('adminToken');
-        try {
-            const response = await fetch(`http://localhost:5000/api/contacts/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+                    if (response.ok) {
+                        setPopup({
+                            show: true,
+                            type: 'success',
+                            message: 'Query deleted successfully!',
+                            isConfirm: false
+                        });
+                        fetchQueries();
+                    } else {
+                        setPopup({
+                            show: true,
+                            type: 'error',
+                            message: 'Failed to delete query',
+                            isConfirm: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error deleting query:', error);
+                    setPopup({
+                        show: true,
+                        type: 'error',
+                        message: 'An error occurred while deleting',
+                        isConfirm: false
+                    });
                 }
-            });
-
-            if (response.ok) {
-                fetchQueries();
             }
-        } catch (error) {
-            console.error('Error deleting query:', error);
-        }
+        });
     };
 
     return (
@@ -262,6 +306,16 @@ const AdminQueries = () => {
                     </div>
                 </div>
             )}
+            <Popup
+                show={popup.show}
+                type={popup.type}
+                message={popup.message}
+                isConfirm={popup.isConfirm}
+                onConfirm={() => {
+                    popup.onConfirm();
+                }}
+                onClose={() => setPopup({ ...popup, show: false })}
+            />
         </div>
     );
 };
