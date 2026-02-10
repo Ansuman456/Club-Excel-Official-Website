@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import RegisterEvent from './pages/RegisterEvent';
 
 // Protected Route Component
+//only authenticated users allowed.
 const ProtectedRoute = ({ children }) => {
     const isAuthenticated = !!localStorage.getItem('adminToken');
     return isAuthenticated ? children : <Navigate to="/admin-login" />;
